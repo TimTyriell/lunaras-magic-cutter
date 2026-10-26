@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Claude-Code-native workflow turning Daggerheart stream sessions into TikTok clip drafts: 9:16, 1080×1920, H.264/AAC, two formats (knowledge/rules.md): `short` ~8–30 s one beat, loops, no end card; `mid` ~45–100 s story arc, hook overlay 0–3 s, burned word-level subtitles (2–4 words/card, speaker colors), German primary. Claude picks, cuts, subtitles, drafts captions. A human approves and posts.
 
-No external APIs: reasoning happens in skills + Haiku subagents; scripts are deterministic (stdlib + ffmpeg + faster-whisper/yt-dlp from pnp-crawl's env). Background brief: [handoffShortRepo.md](handoffShortRepo.md). Architecture plan: `C:\Users\noahs\.claude\plans\create-a-implementation-architecture-pla-peppy-cook.md`.
+No external APIs: reasoning happens in skills + Haiku subagents; scripts are deterministic (stdlib + ffmpeg + faster-whisper/yt-dlp from pnp-crawl's env). Background brief: [handoffShortRepo.md](handoffShortRepo.md).
 
 ## Workflow
 
@@ -27,7 +27,7 @@ Subagents (`.claude/agents/`, all `model: haiku`): clip-scout, speaker-checker, 
 
 ## Commands
 
-Python = pnp-crawl's env (3.11, has faster-whisper + yt-dlp): `$PY = C:\dev\lindo-lauts-notebook\pnp-crawl\ttrpg_env\Scripts\python.exe`. Run from repo root.
+Python = pnp-crawl's env (3.11, has faster-whisper + yt-dlp): `$PY` = `PY` from `.env` (copy `.env.example`; `PNP_ROOT` points at the pnp repos). Run from repo root.
 
 - Self-check: `& $PY scripts\test_core.py` (prints `ok`)
 - Scripts: `session.py <stem>`, `candidates.py <stem>`, `board.py <stem> [--open]`, `feedback.py <feedback.json>`, `fetch.py <stem> <id>`, `words.py <stem> <id> [--apply]`, `ass.py <stem> <id>`, `render.py <stem> <id> [--bg self|map|map-teal] [--layout pip|full]` (map shots; default from style.toml = pip: map + speaker card below), `edgecheck.py <stem> <id> [--apply]` (loudness at every EDL cut edge, no GPU), `hearcheck.py <stem> <id> [--apply]` (Whisper hears each cut edge vs. subtitle text, GPU, runs without asking), `retime.py <stem> <id>` (subtitle word times for EDL clips from probe words + speech onsets; probes uncovered cuts itself; replaces words.py for multi-cut), `probe.py <stem> <start> <end> [<start> <end> ...]` (word times for EDL cut points, GPU, one model load), `mapsheet.py <stem> <id|start-end> [--step 3]` (contact sheet of the VTT map region to pick clean `cam: "map"` shots), `dice.py --check` (dice-roll insert: EDL cut `"dice": {hope, fear, adv, mod, total, label}` + `text: ""`, render.py draws it via headless Edge; check = every die face lands up)
@@ -42,10 +42,10 @@ Python = pnp-crawl's env (3.11, has faster-whisper + yt-dlp): `$PY = C:\dev\lind
 
 ## Sources (read-only, never edit)
 
-- `C:\dev\lindo-lauts-notebook\pnp-crawl\transcripts_final\<stem>.json`: segments `start,end,speaker,text`, speaker = `"Person (Character)"`. Source of truth. Stem `<YYYY-MM-DD>_<Team-A|Team-B>_<youtubeId>`.
+- `<PNP_ROOT>\pnp-crawl\transcripts_final\<stem>.json`: segments `start,end,speaker,text`, speaker = `"Person (Character)"`. Source of truth. Stem `<YYYY-MM-DD>_<Team-A|Team-B>_<youtubeId>`.
 - Raw transcripts do not persist word timestamps → words.py re-transcribes only the clip window.
 - No local video: fetch.py downloads the clip window from `video_url` (own YouTube channel).
-- OKF bundle session summaries: `C:\dev\lindo-lauts-notebook\pnp-knowledge\knowledge\bundle\splitter_des_ewigen\sessions\<date>.md`.
+- OKF bundle session summaries: `<PNP_ROOT>\pnp-knowledge\knowledge\bundle\splitter_des_ewigen\sessions\<date>.md`.
 - Never read `pnp-crawl\groups\voices.json` (biometric).
 
 ## Hard constraints

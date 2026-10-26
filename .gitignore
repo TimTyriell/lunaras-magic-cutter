@@ -19,3 +19,7 @@ assets/dwarfmasters_logo.png
 __pycache__/
 .ruff_cache/
 *.pyc
+
+# Local machine config
+.env
+.claude/settings.local.json

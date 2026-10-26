@@ -7,10 +7,24 @@ from functools import lru_cache
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-PNP = Path(r"C:\dev\lindo-lauts-notebook")
+
+
+def _load_env(path):
+    """Minimal .env reader (KEY=VALUE, # comments). Real environment variables win."""
+    if path.exists():
+        for line in path.read_text(encoding="utf-8").splitlines():
+            key, sep, val = line.partition("=")
+            if sep and not key.lstrip().startswith("#"):
+                os.environ.setdefault(key.strip(), val.strip().strip("\"'"))
+
+
+_load_env(ROOT / ".env")  # see .env.example
+# Unset PNP_ROOT stays an obviously wrong path: imports (self-check) work, real runs fail with a clear name.
+PNP = Path(os.environ.get("PNP_ROOT") or ROOT / "PNP_ROOT-not-set-see-.env.example")
 FINAL = PNP / "pnp-crawl" / "transcripts_final"
 OKF_SESSIONS = PNP / "pnp-knowledge" / "knowledge" / "bundle" / "splitter_des_ewigen" / "sessions"
-YTDLP = PNP / "pnp-crawl" / "ttrpg_env" / "Scripts" / "yt-dlp.exe"
+YTDLP = os.environ.get("YTDLP") or (
+    str(Path(os.environ["PY"]).parent / "yt-dlp.exe") if "PY" in os.environ else "yt-dlp")
 CONFIG = ROOT / "config"
 WORK = ROOT / "work"
 

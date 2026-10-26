@@ -28,6 +28,8 @@ Claude does the scouting, selection, cutting plan, subtitles and caption drafts.
 - faster-whisper and yt-dlp (GPU optional, used for word timing and hearing checks)
 - Source transcripts and stream VODs from the session pipeline. They are not part of this repository.
 
+Copy `.env.example` to `.env` and set `PNP_ROOT` (folder with the transcript repo and knowledge bundle) and `PY` (the interpreter above). `.env` is gitignored.
+
 Run the self-check from the repository root:
 
 ```

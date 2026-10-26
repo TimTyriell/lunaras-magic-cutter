@@ -5,7 +5,7 @@ description: Review cut edges for clipped audio - a word the subtitles/caption s
 
 # /check-edges <stem> <id|all>
 
-`$PY` = `C:\dev\lindo-lauts-notebook\pnp-crawl\ttrpg_env\Scripts\python.exe`, run from `scripts\`. `all` = every `work/<session>/scripts/<id>.edl.json`.
+`$PY` = `PY` from `.env`, run from `scripts\`. `all` = every `work/<session>/scripts/<id>.edl.json`.
 Why: subtitles come from the EDL text, the sound from the cut points. A wrong cut point shows a card nobody hears (Folge 9: "Sag das bitte niemandem." without "niemandem"; the clip ending on "Verdamm-"). Pattern and numbers: learnings/pipeline.md "Cut ends clip words" and "Hear-check".
 
 Two checks, they cover different failures. Run both, in this order:

@@ -6,7 +6,7 @@ description: Fully autonomous clip run for one Daggerheart session, as done by h
 # /auto-clips <stem> [shorts=3 mids=3]
 
 Goal: from one transcript stem to N `short` + M `mid` finished **drafts** in `work/<session>/clips/<id>/out.mp4`, without the user in the loop. Nothing is exported, approved or published (CLAUDE.md hard constraints); the run ends with a list for `/review-clip`.
-`$PY` = `C:\dev\lindo-lauts-notebook\pnp-crawl\ttrpg_env\Scripts\python.exe`, from repo root. `S` = session dir `work/<session name>/` (printed by `session.py`). Pre-conditions: transcript exists (else report and stop), consent entries for the roster (render gate: stop and list missing persons, never bypass), `source.mp4` cached or `fetch.py` can download it.
+`$PY` = `PY` from `.env`, from repo root. `S` = session dir `work/<session name>/` (printed by `session.py`). Pre-conditions: transcript exists (else report and stop), consent entries for the roster (render gate: stop and list missing persons, never bypass), `source.mp4` cached or `fetch.py` can download it.
 Read first: `knowledge/rules.md`, `learnings/pipeline.md` (at least "Cut ends clip words", "Map shots", "Bleep", "Subtitle timing"), memories (taste: fast emotional reaction cuts, no obscene punchlines, map shots in every clip). In Folge 9 every one of these cost a manual review round; this skill builds them in.
 
 ## 1. Scout (as /find-clips steps 1–5)

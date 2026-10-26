@@ -5,8 +5,8 @@ description: Find TikTok clip candidates in one Daggerheart session. Use when th
 
 # /find-clips <stem>
 
-`<stem>` = pnp-crawl transcript stem, e.g. `2026-09-22_Team-A_zXVsTYYR8M4`. List options: `ls C:\dev\lindo-lauts-notebook\pnp-crawl\transcripts_final\*.json`.
-`$PY` = `C:\dev\lindo-lauts-notebook\pnp-crawl\ttrpg_env\Scripts\python.exe` (run from repo root).
+`<stem>` = pnp-crawl transcript stem, e.g. `2026-09-22_Team-A_zXVsTYYR8M4`. List options: `ls <PNP_ROOT>\pnp-crawl\transcripts_final\*.json`.
+`$PY` = `PY` from `.env` (run from repo root).
 
 1. `& $PY scripts\session.py <stem>` → `work/<stem>/segments.json`, `context.md`, `chunks/chunk_NN.txt`.
 2. Collect example paths: newest ≤5 in `knowledge/examples/approved/`, ≤3 in `rejected/`.

@@ -2,8 +2,7 @@
   "permissions": {
     "allow": [
       "Bash(ffmpeg:*)",
-      "Bash(ffprobe:*)",
-      "Bash(C:/dev/lindo-lauts-notebook/pnp-crawl/ttrpg_env/Scripts/python.exe scripts/:*)"
+      "Bash(ffprobe:*)"
     ]
   }
 }

@@ -5,7 +5,7 @@ description: Cut and render one candidate clip to a 9:16 TikTok mp4 with word-le
 
 # /cut-clip <stem> <id>
 
-`$PY` = `C:\dev\lindo-lauts-notebook\pnp-crawl\ttrpg_env\Scripts\python.exe`. Clip dir `D` = `work/<stem>/clips/<id>/`.
+`$PY` = `PY` from `.env`. Clip dir `D` = `work/<stem>/clips/<id>/`.
 Only for candidates the user picked. Output is a draft; nothing leaves the machine.
 
 0. **Board feedback** (`/cut-clip <stem> picks <feedback.json path>`): `& $PY scripts\feedback.py <path>` logs every verdict to `knowledge/decisions.jsonl` (learning signal), applies window tweaks, prints picked ids. Run steps 1–7 for each pick; respect each pick's note (e.g. hook wish) when prompting caption-writer.
