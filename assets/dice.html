@@ -1,0 +1,181 @@
+<!doctype html>
+<meta charset="utf-8">
+<body style="margin:0;background:transparent">
+<script type="module">
+// Dice-roll insert, driven by scripts/dice.py: ?spec=<json>&n=<frames>&fps=<fps> renders frames 0..n-1 and POSTs
+// each PNG (1080x1920, alpha) to /frame/<i>, then /done. ?check=1 posts which face lands up per value to /check.
+// ponytail: scripted tumble, no physics - pose is a pure function of time, lands exactly on the wanted face.
+import * as THREE from './vendor/three.module.min.js';
+
+const W = 1080, H = 1920, V = THREE.Vector3;
+const q = new URLSearchParams(location.search);
+const post = (path, body) => fetch(path, {method: 'POST', body});
+window.onerror = (m, s, l) => post('/error', `${m} @${l}`);
+window.onunhandledrejection = e => post('/error', String(e.reason));
+
+const renderer = new THREE.WebGLRenderer({antialias: true, alpha: true, preserveDrawingBuffer: true});
+renderer.setSize(W, H, false);
+renderer.setClearColor(0, 0);
+const scene = new THREE.Scene();
+const cam = new THREE.PerspectiveCamera(30, W / H, 0.1, 100);
+cam.position.set(0, 0, 20);  // visible height at z=0: 10.72 units -> 1 unit = 179 px
+const PX = H / (2 * 20 * Math.tan(Math.PI / 12));
+scene.add(new THREE.AmbientLight(0xffffff, 0.9));
+const key = new THREE.DirectionalLight(0xfff0d0, 2.4); key.position.set(-4, 6, 8); scene.add(key);
+const rim = new THREE.DirectionalLight(0xb08cff, 1.6); rim.position.set(5, -3, -4); scene.add(rim);
+
+const FONT = '"Palatino Linotype", "Book Antiqua", Georgia, serif';
+const DICE = {
+  hope: {sides: 12, size: 1.1, color: 0xe8b33a, ink: '#2a1600', emissive: 0x3a2400},
+  fear: {sides: 12, size: 1.1, color: 0x4a2470, ink: '#f2c75c', emissive: 0x16052a},
+  adv: {sides: 6, size: 1.05, color: 0xf1e8d4, ink: '#3a2a18', emissive: 0x1a140a},
+};
+const COLOR = {hope: '#f2c75c', fear: '#b98cff', adv: '#f1e8d4', mod: '#ffffff'};
+
+function faces(geo) {
+  // coplanar triangles -> faces {n, c, up}; opposite faces get values v and sides+1-v (like real dice)
+  const p = geo.attributes.position, groups = new Map();
+  for (let i = 0; i < p.count; i += 3) {
+    const [a, b, c] = [0, 1, 2].map(k => new V().fromBufferAttribute(p, i + k));
+    const n = new V().subVectors(c, b).cross(new V().subVectors(a, b)).normalize();
+    const k = n.toArray().map(x => Math.round(x * 100)).join();  // not toFixed: "-0.00" splits a face
+    if (!groups.has(k)) groups.set(k, {n, pts: new Map()});
+    for (const v of [a, b, c]) groups.get(k).pts.set(v.toArray().map(x => x.toFixed(3)).join(), v);
+  }
+  const fs = [...groups.values()].map(({n, pts}) => {
+    const c = new V(); pts.forEach(v => c.add(v)); c.divideScalar(pts.size);
+    if (n.dot(c) < 0) n.negate();
+    let up = new V(0, 1, 0).projectOnPlane(n);
+    if (up.length() < 0.1) up = new V(0, 0, -1).projectOnPlane(n);
+    return {n, c, up: up.normalize(), v: 0};
+  });
+  let next = 1;
+  for (const f of fs) {
+    if (f.v) continue;
+    f.v = next++;
+    const opp = fs.find(g => !g.v && g.n.dot(f.n) < -0.99);
+    if (opp) opp.v = fs.length + 1 - f.v;
+  }
+  return fs;
+}
+
+function label(text, ink, underline) {
+  const cv = document.createElement('canvas'); cv.width = cv.height = 256;
+  const g = cv.getContext('2d');
+  g.fillStyle = ink; g.textAlign = 'center'; g.textBaseline = 'middle';
+  g.font = `bold ${text.length > 1 ? 150 : 180}px ${FONT}`;
+  g.fillText(text, 128, 132);
+  if (underline) g.fillRect(78, 205, 100, 12);  // 6 vs 9
+  const t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4;
+  return t;
+}
+
+function makeDie(kind) {
+  const d = DICE[kind];
+  const geo = (d.sides === 12 ? new THREE.DodecahedronGeometry(d.size) : new THREE.BoxGeometry(d.size, d.size, d.size).toNonIndexed());
+  const mesh = new THREE.Mesh(geo, new THREE.MeshStandardMaterial(
+    {color: d.color, emissive: d.emissive, metalness: 0.25, roughness: 0.35, flatShading: true}));
+  const fs = faces(geo);
+  const decal = d.sides === 12 ? d.size * 0.62 : d.size * 0.8;
+  for (const f of fs) {
+    const m = new THREE.Mesh(new THREE.PlaneGeometry(decal, decal),
+      new THREE.MeshStandardMaterial({map: label(String(f.v), d.ink, d.sides > 6 && (f.v === 6 || f.v === 9)),
+        transparent: true, roughness: 0.5, depthWrite: false}));
+    m.position.copy(f.c).addScaledVector(f.n, 0.004);
+    m.quaternion.setFromRotationMatrix(new THREE.Matrix4().makeBasis(new V().crossVectors(f.up, f.n), f.up, f.n));
+    mesh.add(m);
+  }
+  mesh.userData.faces = fs;
+  scene.add(mesh);
+  return mesh;
+}
+
+const TILT = new THREE.Quaternion().setFromEuler(new THREE.Euler(-0.32, 0.22, 0.05));  // show some 3D at rest
+function restPose(mesh, value) {
+  // rotation taking the value's face normal to the camera (+z) and its up to screen up, then TILT
+  const f = mesh.userData.faces.find(x => x.v === value);
+  const m = new THREE.Matrix4().makeBasis(new V().crossVectors(f.up, f.n), f.up, f.n).transpose();
+  return TILT.clone().multiply(new THREE.Quaternion().setFromRotationMatrix(m));
+}
+function upFace(mesh) {
+  const z = new V(0, 0, 1);
+  return mesh.userData.faces.reduce((a, f) => f.n.clone().applyQuaternion(mesh.quaternion).dot(z) >
+    a.n.clone().applyQuaternion(mesh.quaternion).dot(z) ? f : a).v;
+}
+
+if (q.has('check')) {
+  const out = {};
+  for (const kind of ['hope', 'adv']) {
+    const m = makeDie(kind), sides = DICE[kind].sides;
+    out[sides] = [];
+    for (let v = 1; v <= sides; v++) { m.quaternion.copy(restPose(m, v)); out[sides].push(upFace(m)); }
+  }
+  await post('/check', JSON.stringify(out));
+} else {
+  const spec = JSON.parse(q.get('spec')), N = +q.get('n'), FPS = +q.get('fps');
+  // [kind, value, rest x, rest y (world units), enters from (-1 left, 1 right), land time s]
+  const plan = [['hope', spec.hope, -1.4, 1.75, -1, 0.95], ['fear', spec.fear, 1.4, 1.75, 1, 1.1],
+    ...spec.adv.map((v, i) => ['adv', v, (i - (spec.adv.length - 1) / 2) * 1.6, -0.45, i % 2 ? 1 : -1, 1.25 + 0.1 * i])];
+  const dice = plan.map(([kind, v, x, y, side, T], i) => {
+    const m = makeDie(kind);
+    const axis = new V(Math.sin(i * 2.1 + 1), Math.cos(i * 1.7), 0.6 * Math.sin(i * 3.3)).normalize();
+    return {m, rest: restPose(m, v), x, y, side, T, axis, spin: 5 * Math.PI + i * 1.3};
+  });
+  const T_POP = Math.max(...plan.map(p => p[5])) + 0.3;
+
+  const out = document.createElement('canvas'); out.width = W; out.height = H;
+  const g = out.getContext('2d');
+  await document.fonts.load(`bold 200px ${FONT}`);
+  const ease = p => 1 - (1 - p) ** 3;
+
+  for (let i = 0; i < N; i++) {
+    const t = i / FPS;
+    for (const d of dice) {
+      const p = Math.min(t / d.T, 1), lp = 1 - p;
+      d.m.position.set(d.x + d.side * 4.5 * (1 - ease(p)), d.y + 2.2 * lp * lp * Math.abs(Math.cos(Math.PI * 2.5 * p)), 0);
+      const spin = new THREE.Quaternion().setFromAxisAngle(d.axis, d.spin * lp * lp);
+      const dt = Math.max(t - d.T, 0);  // small settle wobble after landing
+      const wob = new THREE.Quaternion().setFromAxisAngle(new V(1, 0, 0), 0.18 * Math.exp(-7 * dt) * Math.sin(22 * dt));
+      d.m.quaternion.copy(spin).multiply(t > d.T ? wob : new THREE.Quaternion()).multiply(d.rest);
+    }
+    renderer.render(scene, cam);
+
+    g.clearRect(0, 0, W, H);
+    const k = Math.min(Math.max((t - T_POP + 0.2) / 0.4, 0), 1);  // glow behind the dice once they land
+    if (k > 0) {
+      const r = g.createRadialGradient(W / 2, 760, 40, W / 2, 760, 620);
+      r.addColorStop(0, `rgba(242,199,92,${0.45 * k})`); r.addColorStop(1, 'rgba(242,199,92,0)');
+      g.fillStyle = r; g.fillRect(0, 0, W, H);
+    }
+    g.drawImage(renderer.domElement, 0, 0);
+    const tp = t - T_POP;
+    if (tp > 0) {
+      const s = tp < 0.18 ? 0.4 + 0.75 * tp / 0.18 : tp < 0.3 ? 1.15 - 0.15 * (tp - 0.18) / 0.12 : 1;
+      g.save(); g.translate(W / 2, 1300); g.scale(s, s);
+      g.textAlign = 'center'; g.textBaseline = 'middle'; g.font = `bold 230px ${FONT}`;
+      g.shadowColor = 'rgba(255,190,60,0.9)'; g.shadowBlur = 40;
+      g.lineWidth = 10; g.strokeStyle = '#2a1600'; g.strokeText(String(spec.total), 0, 0);
+      g.fillStyle = '#ffd77a'; g.fillText(String(spec.total), 0, 0);
+      g.restore();
+      // formula, colour per die: 12 + 9 + 6 + 4 + 5
+      const parts = [[spec.hope, 'hope'], [spec.fear, 'fear'], ...spec.adv.map(v => [v, 'adv']), [spec.mod, 'mod']]
+        .filter(([v]) => v).flatMap(([v, c], j) => j ? [[' + ', '#cfc6b8'], [String(v), COLOR[c]]] : [[String(v), COLOR[c]]]);
+      g.globalAlpha = Math.min(tp / 0.3, 1);
+      g.font = `bold 64px ${FONT}`; g.textAlign = 'left'; g.shadowColor = 'rgba(0,0,0,0.8)'; g.shadowBlur = 12;
+      let x = W / 2 - parts.reduce((a, [s]) => a + g.measureText(s).width, 0) / 2;
+      for (const [s, c] of parts) { g.fillStyle = c; g.fillText(s, x, 1440); x += g.measureText(s).width; }
+      g.textAlign = 'center'; g.font = `bold 52px ${FONT}`;
+      for (const [kind, x, y] of plan.filter(p => p[0] !== 'adv').map(p => [p[0], p[2], p[3]])) {
+        g.fillStyle = COLOR[kind];
+        g.fillText(kind.toUpperCase(), W / 2 + x * PX, H / 2 - (y + DICE[kind].size + 0.25) * PX);
+      }
+      g.globalAlpha = Math.min(Math.max((tp - 0.25) / 0.3, 0), 1);
+      g.textAlign = 'center'; g.font = `bold italic 88px ${FONT}`; g.shadowColor = 'rgba(255,190,60,0.7)'; g.shadowBlur = 24;
+      g.fillStyle = '#ffe4a0'; g.fillText(spec.label, W / 2, 1545);
+      g.globalAlpha = 1; g.shadowBlur = 0;
+    }
+    await post(`/frame/${i}`, await new Promise(r => out.toBlob(r, 'image/png')));
+  }
+  await post('/done', '');
+}
+</script>

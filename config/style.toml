@@ -1,0 +1,17 @@
+# Visual style for rendered clips (render.py, ass.py). Options for bg: see render.BG_STYLES
+#   self      blurred copy of the shot itself (v1)
+#   map       blurred, darkened VTT battle map (layouts.toml [<team>].map)
+#   map-teal  blurred map, cool teal grade + vignette (complement to warm faces / wood overlay)
+bg = "map"  # user pick 2026-10-19 (A/B of self / map / map-teal on gold-saga)
+# Map shots (EDL cam = "map"): "pip" = map on top + speaker card below; "full" = map only.
+layout = "pip"  # user pick 2026-10-20 (A/C on kraken: C)
+
+# End card appended after the clip: dark map background, logo, then text lines.
+# First line = channel (brand teal from the logo), further lines = info (white, smaller).
+# Links are not clickable inside TikTok videos; the card is a reminder, the profile link does the work.
+[endcard]
+enabled = true
+seconds = 3.0
+audio_overlap = true  # last cut's audio keeps running under the card (fades out over the last 1 s); user 2026-10-20
+logo = "assets/dwarfmasters_logo.png"
+lines = ["twitch.tv/dwarfmastersx", "Daggerheart™ Compatible", "Der Splitter des Ewigen · Staffel 1"]

@@ -1,0 +1,25 @@
+# Facecam boxes per team stream layout, in source pixels (1920x1080): person = [x, y, w, h].
+# Filled by /calibrate-layout (Claude proposes from a frame, human confirms).
+# render.py fits the box into the picture band on a background fill.
+# Persons without a box get the wide shot (full frame).
+# Layout geometry only. No face/voice data. Person mapping from on-screen character name plates.
+
+# Calibrated 2026-10-19 from Folge 10 (2026-10-14) frames at 1:27:10 and 1:29:55.
+# Plates: Dodo=marco, Lindo Laut=tim, Lunara=celin, Gunther=heiko; GM unplated, bottom center.
+# v4 (user pick): whole uncut card tiles (v1 boxes) shown at v3 screen size (band 1200 high, render.py).
+# v2 inner cams (rejected, looked worse): marco [66,50,296,345] tim [1563,50,296,345] celin [66,590,300,352]
+#                                         heiko [1563,592,298,350] deniz [735,680,470,400]
+# v3 inset tiles (rejected, frame clipped): marco [46,32,332,480] tim [1543,32,334,480] celin [50,575,332,475]
+#                                           heiko [1543,575,334,475] deniz [710,685,520,395]
+[team-a]
+marco = [28, 12, 368, 520]
+tim = [1525, 12, 370, 520]
+celin = [32, 555, 368, 515]
+heiko = [1525, 555, 370, 515]
+deniz = [690, 670, 560, 410]
+# VTT battle map area (background source for style bg = "map*" and the map shots of the pip layout).
+# 2026-10-21: inset from [540, 55, 845, 575] (same 1.47 aspect). Measured on Folge 9 at 4x zoom: the VTT toolbar
+# (orange icons, text) fills y < 60, and the purple frame ornaments sit ~15 px deep in all four map corners.
+map = [560, 66, 806, 548]
+
+[team-b]

@@ -1,0 +1,10 @@
+# Subtitle color per person key (lowercase). Unknown persons render white.
+deniz = { color = "#FFD34D" }   # GM
+tim = { color = "#5AC8FA" }
+celin = { color = "#FF6FB5" }
+marco = { color = "#7CE07C" }
+heiko = { color = "#FF9F43" }
+kevin = { color = "#B28DFF" }
+micha = { color = "#4DD0C8" }
+basti = { color = "#FF6B6B" }
+benjamin = { color = "#C6E377" }
