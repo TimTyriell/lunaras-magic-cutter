@@ -1,0 +1,21 @@
+# Local working data (per-session scratch, source video, rendered output)
+work/
+out/
+
+# Credentials and personal data (never publish)
+config/cookies.txt
+config/consent.toml
+handoffs/
+
+# Private clip knowledge: verbatim transcript excerpts from real players
+knowledge/decisions.jsonl
+knowledge/examples/
+knowledge/proposals/
+
+# Third-party brand assets
+assets/dwarfmasters_logo.png
+
+# Caches
+__pycache__/
+.ruff_cache/
+*.pyc
